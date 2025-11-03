@@ -12,7 +12,8 @@ export const createFlowHandlers = (
   const handleOptionClick = (value, label, questionId) => {
 
     if (step === "consent" && questionId === "consent") {
-      pushUser(label, questionId);
+      // pushUser(label, questionId);
+      pushUser(label || (value ? "Yes, I do" : "No, I don’t"), questionId);
       setData((d) => ({ ...d, consent: !!value }));
       if (!value) {
         pushBot(
@@ -38,8 +39,34 @@ export const createFlowHandlers = (
     }
 
     // === REFERRAL ===
+    // if (step === "referral" && questionId === "referral") {
+    //   pushUser(label, questionId);
+    //   const flags = {
+    //     referral: value === "referral",
+    //     sprout: value === "sprout",
+    //     noReferral: value === "none",
+    //   };
+    //   setData((d) => ({
+    //     ...d,
+    //     referral: value,
+    //     flags: { ...d.flags, ...flags },
+    //   }));
+    //   pushBot(`Okay ${data.name || ""}. Please tell me your e-mail.`, {
+    //     questionId: "email",
+    //   });
+    //   proceed("email", { type: "text", questionId: "email" });
+    //   return;
+    // }
+
+    // === REFERRAL ===
     if (step === "referral" && questionId === "referral") {
-      pushUser(label, questionId);
+      const displayText = label || 
+        (value === "referral" ? "Yes I do" :
+         value === "sprout" ? "Yes, from Sprout" :
+         "No, I don’t");
+
+      pushUser(displayText, questionId);  // FIXED!
+
       const flags = {
         referral: value === "referral",
         sprout: value === "sprout",
@@ -410,20 +437,6 @@ export const createFlowHandlers = (
       return;
     }
 
-    // === PARTNER NAME (handled in handleAnswer below) ===
-
-    // === PARTNER DOB (handled in handleAnswer) ===
-
-    // === PARTNER HEALTH CARD UPLOAD (handled in handleAnswer) ===
-
-    // === PARTNER SEX (handled in handleAnswer) ===
-
-    // === PARTNER EMAIL (handled in handleAnswer) ===
-
-    // === PARTNER ADDRESS (handled in handleAnswer) ===
-
-    // === PARTNER PHONE (handled in handleAnswer) ===
-
     // === PARTNER SEX ===
     if (step === "partnerSex" && questionId === "partnerSex") {
       pushUser(label, questionId);
@@ -482,20 +495,10 @@ export const createFlowHandlers = (
     const q = awaiting?.questionId || step;
 
     if (awaiting.type === "file") {
-    //   const fileMetadata = Array.isArray(value)
-    //     ? value.map((file) => ({
-    //         name: file.name || "unknown",
-    //         size: file.size || 0,
-    //         type: file.type || "unknown",
-    //         lastModified: file.lastModified || Date.now(),
-    //       }))
-    //     : [];
 
-    //   pushUser(`${fileMetadata.length} file(s) uploaded`, q);
       pushUser(`${Array.isArray(value) ? value.length : 0} file(s) uploaded`, q);
 
       if (step === "blueCrossUpload") {
-        // setData((d) => ({ ...d, blueCrossFiles: fileMetadata }));
         setData((d) => ({ ...d, blueCrossFiles: Array.isArray(value) ? value : [] }));
         pushBot(
           "Thank you for providing your information. To help us connect you with the right specialist and schedule the appropriate time, could you please tell us the main reason you are contacting the clinic today?",
@@ -536,20 +539,20 @@ export const createFlowHandlers = (
       }
 
       if (step === "healthCardUpload") {
-        // setData((d) => ({ ...d, healthCardFiles: fileMetadata }));
         setData((d) => ({ ...d, healthCardFiles: Array.isArray(value) ? value : [] }));
-        pushBot("What's your sex assigned at birth:", {
-          questionId: "sex",
+        // Next: OHIP question
+        pushBot("Do you have a OHIP number?", {
+          questionId: "ohip",
           options: [
-            { value: "Male", label: "Male" },
-            { value: "Female", label: "Female" },
+            { value: true, label: "Yes, I do" },
+            { value: false, label: "No, I don't" },
           ],
         });
-        proceed("sex", { type: "option", questionId: "sex" });
+        proceed("ohip", { type: "option", questionId: "ohip" });
         return;
       }
       if (step === "recordsUpload") {
-        // setData((d) => ({ ...d, medicalRecords: fileMetadata }));
+
         setData((d) => ({ ...d, medicalRecords: Array.isArray(value) ? value : [] }));
         pushBot(
           "Do you have a partner that will participate the pocedure? (non mandatory)",
@@ -613,15 +616,6 @@ export const createFlowHandlers = (
 
     if (step === "email") {
       setData((d) => ({ ...d, email: String(value).trim() }));
-      pushBot("Please tell me your phone number", {
-        questionId: "phone",
-      });
-      proceed("phone", { type: "text", questionId: "phone" });
-      return;
-    }
-
-    if (step === "phone") {
-      setData((d) => ({ ...d, phone: String(value).trim() }));
       pushBot("Now, tell me your Date of birth:", { questionId: "dob" });
       proceed("dob", { type: "date", questionId: "dob" });
       return;
@@ -632,67 +626,72 @@ export const createFlowHandlers = (
       const age = computeAge(dob);
       const ageFlag = age !== null && age >= 35 ? "Advanced Age" : "";
       setData((d) => ({ ...d, dob, ageFlag }));
-      pushBot("Please upload your Health Card:", {
-        questionId: "healthCardUpload",
+      pushBot("What's your sex assigned at birth:", {
+        questionId: "sex",
+        options: [
+          { value: "Male", label: "Male" },
+          { value: "Female", label: "Female" },
+        ],
       });
-      proceed("healthCardUpload", {
-        type: "file",
-        questionId: "healthCardUpload",
-        accept: "image/*,application/pdf",
-        multiple: false,
-      });
+      proceed("sex", { type: "option", questionId: "sex" });
       return;
     }
 
-    // if (step === "sex") {
-    //   setData((d) => ({ ...d, sexAtBirth: String(value) }));
-    //   pushBot("And finally, what’s your address?", { questionId: "address" });
-    //   proceed("address", { type: "text", questionId: "address" });
-    //   return;
-    // }
-        if (step === "sex") {
+    if (step === "sex") {
       setData((d) => ({ ...d, sexAtBirth: String(value) }));
-
-      // NEW: Pain Level Question
-      pushBot("On a scale of 1-5, how would you rate your current pain level?", {
-        questionId: "painLevel",
-      });
-      proceed("painLevel", { type: "text", questionId: "painLevel" });
-      return;
-    }
-    
-    if (step === "painLevel") {
-      const input = String(value).trim();
-      const num = parseInt(input.replace(/\/.*/, ""), 10); // "3/5" → 3
-
-      if (isNaN(num) || num < 1 || num > 5) {
-        pushBot("Please enter a valid number between 1 and 5.", { questionId: "painLevel" });
-        return;
-      }
-
-    //   pushUser(input, "painLevel");
-      setData((d) => ({ ...d, painLevel: num }));
-
-      // Next: Address
-      pushBot("And finally, what’s your address?", { questionId: "address" });
+      pushBot("And finally, what's your address?", { questionId: "address" });
       proceed("address", { type: "text", questionId: "address" });
       return;
     }
 
     if (step === "address") {
       setData((d) => ({ ...d, address: String(value) }));
+      pushBot("Please tell me your phone number", {
+        questionId: "phone",
+      });
+      proceed("phone", { type: "text", questionId: "phone" });
+      return;
+    }
+
+    if (step === "phone") {
+      setData((d) => ({ ...d, phone: String(value).trim() }));
+      pushBot("Do you have a Health Card?", {
+        questionId: "healthCardChoice",
+        options: [
+          { value: true, label: "Yes, I do" },
+          { value: false, label: "No, I don't" },
+        ],
+      });
+      proceed("healthCardChoice", { type: "option", questionId: "healthCardChoice" });
+      return;
+    }
+
+    if (step === "healthCardChoice") {
+      const hasHealthCard = String(value) === "true" || value === true;
+      if (hasHealthCard) {
+        pushBot("Please upload your Health Card:", {
+          questionId: "healthCardUpload",
+        });
+        proceed("healthCardUpload", {
+          type: "file",
+          questionId: "healthCardUpload",
+          accept: "image/*,application/pdf",
+          multiple: false,
+        });
+        return;
+      }
+      // If no health card, proceed to OHIP question
       pushBot("Do you have a OHIP number?", {
         questionId: "ohip",
         options: [
           { value: true, label: "Yes, I do" },
-          { value: false, label: "No, I don’t" },
+          { value: false, label: "No, I don't" },
         ],
       });
       proceed("ohip", { type: "option", questionId: "ohip" });
       return;
     }
-    
-    
+
     if (step === "ohip") {
       const yes = String(value) === "true" || value === true;
       setData((d) => ({ ...d, ohipProvided: yes }));

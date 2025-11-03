@@ -8,6 +8,7 @@ import { uploadAvatar } from "../services/api";
 import { Camera } from "lucide-react";
 import { logout } from "../services/api";
 import { useNavigate } from 'react-router-dom';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -101,7 +102,13 @@ const SettingsPage = () => {
   return (
     <div className="p-4 md:p-8 min-h-screen max-w-[1140px] mx-auto">
       <h2 className="text-2xl font-semibold p-4">Settings</h2>
-      <button className="text-xl font-semibold p-4" onClick={() => navigate("/admin/dashboard")}>Back to Dashboard</button>
+      <button 
+        className="flex items-center gap-2 px-4 py-2 mb-2 text-[#125A67] hover:text-[#0d434c] transition-colors duration-200 font-medium hover:bg-gray-50 rounded-lg group"
+        onClick={() => navigate("/admin/dashboard")}
+      >
+        <ArrowBackIcon className="transition-transform duration-200 group-hover:-translate-x-1" fontSize="small" />
+        <span>Back to Dashboard</span>
+      </button>
       <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-lg">
         {/* Sidebar */}
         <div className="w-full md:w-1/4 border border-gray-200 rounded-lg">

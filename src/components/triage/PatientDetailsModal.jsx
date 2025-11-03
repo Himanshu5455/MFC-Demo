@@ -10,6 +10,8 @@ import {
   IconButton,
   Chip,
   Grid,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
@@ -27,6 +29,8 @@ const PatientDetailsModal = ({ open, onClose, patient, position, onStatusChange 
   // console.log("PatientDetailsModal patient:", patient);
   const [patientData, setPatientData] = useState(patient);
   const [markLoading, setMarkLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -74,6 +78,50 @@ const PatientDetailsModal = ({ open, onClose, patient, position, onStatusChange 
       navigate(`/patient-details/${patient.id}`);
     } else {
       console.warn("Patient ID is missing, cannot navigate to details page.");
+    }
+  };
+
+  // Handle menu open/close
+  const openActionsMenu = (event) => {
+    setMenuAnchorEl(event.currentTarget);
+  };
+
+  const closeActionsMenu = () => {
+    setMenuAnchorEl(null);
+  };
+
+  // Handle menu action select
+  const handleActionSelect = async (value) => {
+    if (!value) return;
+
+    // Map dropdown to backend status and UI status
+    const backendMap = {
+      review: 'Pending', // goes to Pending column
+      approve: 'completed', // goes to Complete column
+      reject: 'Rejected', // goes to Rejected column
+    };
+    const uiMap = {
+      review: 'Pending',
+      approve: 'Complete',
+      reject: 'Rejected',
+    };
+
+    const backendStatus = backendMap[value];
+    const uiStatus = uiMap[value];
+    if (!backendStatus || !uiStatus) return;
+
+    try {
+      setActionLoading(true);
+      await updateCustomerStatus(patient.id, backendStatus);
+      setPatientData((prev) => ({ ...prev, status: uiStatus }));
+      if (onStatusChange) {
+        onStatusChange(patient.id, uiStatus);
+      }
+    } catch (err) {
+      console.error('Failed to update status', err);
+    } finally {
+      setActionLoading(false);
+      closeActionsMenu();
     }
   };
 
@@ -203,11 +251,9 @@ const PatientDetailsModal = ({ open, onClose, patient, position, onStatusChange 
           >
             Mark as complete
           </Button>
-           <button
-              className="min-w-[31px] px-[7px] py-[6px] bg-[#D9D9D9] rounded-[8px] mb-3"
-            >
-              <MoreHorizIcon />
-            </button>
+          <IconButton onClick={openActionsMenu} disabled={actionLoading}>
+            <MoreHorizIcon />
+          </IconButton>
             </Box>
 
 
@@ -608,6 +654,25 @@ const PatientDetailsModal = ({ open, onClose, patient, position, onStatusChange 
           </Grid>
         </Box>
       </DialogContent>
+
+      {/* Actions Menu */}
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={closeActionsMenu}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        {patientData?.status !== 'Pending' && (
+          <MenuItem disabled={actionLoading} onClick={() => handleActionSelect("review")}>Review</MenuItem>
+        )}
+        {patientData?.status !== 'Complete' && (
+          <MenuItem disabled={actionLoading} onClick={() => handleActionSelect("approve")}>Approve</MenuItem>
+        )}
+        {patientData?.status !== 'Rejected' && (
+          <MenuItem disabled={actionLoading} onClick={() => handleActionSelect("reject")}>Reject</MenuItem>
+        )}
+      </Menu>
     </Dialog>
   );
 };

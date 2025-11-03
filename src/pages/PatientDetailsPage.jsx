@@ -10,6 +10,8 @@ import {
   Button,
   Chip,
   IconButton,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -101,6 +103,8 @@ const PatientDetailsPage = () => {
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [expandedSections, setExpandedSections] = useState({
     initialContact: true,
     symptomAssessment: false,
@@ -210,6 +214,47 @@ if (!isNaN(age) && age > 35) {
     }));
   };
 
+  // Handle menu open/close
+  const openActionsMenu = (event) => {
+    setMenuAnchorEl(event.currentTarget);
+  };
+
+  const closeActionsMenu = () => {
+    setMenuAnchorEl(null);
+  };
+
+  // Handle menu action select
+  const handleActionSelect = async (value) => {
+    if (!value) return;
+
+    // Map dropdown to backend status and UI status
+    const backendMap = {
+      review: 'Pending', // goes to Pending column
+      approve: 'completed', // goes to Complete column
+      reject: 'Rejected', // goes to Rejected column
+    };
+    const uiMap = {
+      review: 'Pending',
+      approve: 'Complete',
+      reject: 'Rejected',
+    };
+
+    const backendStatus = backendMap[value];
+    const uiStatus = uiMap[value];
+    if (!backendStatus || !uiStatus) return;
+
+    try {
+      setActionLoading(true);
+      await updateCustomerStatus(patient.id, backendStatus);
+      setPatient((prev) => ({ ...prev, status: uiStatus }));
+    } catch (err) {
+      console.error('Failed to update status', err);
+    } finally {
+      setActionLoading(false);
+      closeActionsMenu();
+    }
+  };
+
   // Render loading state
   if (loading) {
     return (
@@ -295,9 +340,9 @@ if (!isNaN(age) && age > 35) {
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            {/* <IconButton onClick={() => navigate(-1)} size="small">
+            <IconButton onClick={() => navigate(-1)} size="small">
               <ArrowBackIcon />
-            </IconButton> */}
+            </IconButton>
             <Typography variant="h4" sx={{ fontWeight: 600, color: COLORS.textPrimary }}>
               Patient Information
             </Typography>
@@ -326,11 +371,9 @@ if (!isNaN(age) && age > 35) {
             >
               Mark as complete
             </Button>
-            <button
-              className="min-w-[31px] px-[7px] py-[6px] bg-[#D9D9D9] rounded-[8px]"
-            >
+            <IconButton onClick={openActionsMenu} disabled={actionLoading}>
               <MoreHorizIcon />
-            </button>
+            </IconButton>
 
           </Box>
         </Box>
@@ -524,6 +567,25 @@ if (!isNaN(age) && age > 35) {
           </Grid>
         </Grid>
       </div>
+
+      {/* Actions Menu */}
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={closeActionsMenu}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        {patient?.status !== 'Pending' && (
+          <MenuItem disabled={actionLoading} onClick={() => handleActionSelect("review")}>Review</MenuItem>
+        )}
+        {patient?.status !== 'Complete' && (
+          <MenuItem disabled={actionLoading} onClick={() => handleActionSelect("approve")}>Approve</MenuItem>
+        )}
+        {patient?.status !== 'Rejected' && (
+          <MenuItem disabled={actionLoading} onClick={() => handleActionSelect("reject")}>Reject</MenuItem>
+        )}
+      </Menu>
     </Box>
   );
 };

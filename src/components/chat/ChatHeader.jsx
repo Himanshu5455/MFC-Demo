@@ -40,7 +40,7 @@ const ChatHeader = ({ isMobile, hasUserStartedMessaging, onStartNewChat }) => {
               variant="h6"
               sx={{ fontSize: "1rem", fontWeight: 500, color: "#333" }}
             >
-              Maya - Triage assistant
+              Ember - Triage assistant
             </Typography>
             <Typography
               variant="caption"
@@ -102,7 +102,7 @@ const ChatHeader = ({ isMobile, hasUserStartedMessaging, onStartNewChat }) => {
             variant="h6"
             sx={{ fontSize: "1.125rem", fontWeight: 600, color: "#333" }}
           >
-            Maya - Triage assistant
+            Ember - Triage assistant
           </Typography>
           <Typography variant="body2" sx={{ color: "#666" }}>
             Please answer the questions below to help us assist you better

@@ -153,14 +153,7 @@ const EmberIntake = () => {
       partner_email: data?.partner?.email?.trim() || "",
       partner_address: data?.partner?.address?.trim() || "",
       partner_phone: data?.partner?.phone?.trim() || "",
-      //    files: [
-      //   ...(data?.healthCardFiles || []),
-      //   ...(data?.medicalRecords || []),
-      //   ...(data?.blueCrossFiles || []),
-      //   ...(data?.partnerHealthCardFiles || []),
-      // ],
-
-      medical_records: "", // Files are handled separately
+      medical_records: "", 
       alternative_no: "",
       physician: "",
       region: "",
