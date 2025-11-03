@@ -23,6 +23,7 @@ const PatientTable = ({ patients, onStatusChange }) => {
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [menuPatientId, setMenuPatientId] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [menuPatientStatus, setMenuPatientStatus] = useState(null);
 
   const handlePatientClick = async (patient, event) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -53,15 +54,17 @@ const PatientTable = ({ patients, onStatusChange }) => {
     setAnchorPosition(null);
   };
 
-  const openActionsMenu = (event, patientId) => {
+  const openActionsMenu = (event, patientId, status) => {
     event.stopPropagation();
     setMenuAnchorEl(event.currentTarget);
     setMenuPatientId(patientId);
+    setMenuPatientStatus(status);
   };
 
   const closeActionsMenu = () => {
     setMenuAnchorEl(null);
     setMenuPatientId(null);
+    setMenuPatientStatus(null);
   };
 
   const handleActionSelect = async (value) => {
@@ -171,7 +174,7 @@ const PatientTable = ({ patients, onStatusChange }) => {
                   {patient.entryDate}
                 </TableCell>
                 <TableCell>
-                  <IconButton size="small" onClick={(e) => openActionsMenu(e, patient.id)} disabled={actionLoading}>
+                  <IconButton size="small" onClick={(e) => openActionsMenu(e, patient.id, patient.status)} disabled={actionLoading}>
                     <MoreVertIcon />
                   </IconButton>
                 </TableCell>
@@ -188,9 +191,15 @@ const PatientTable = ({ patients, onStatusChange }) => {
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        <MenuItem disabled={actionLoading} onClick={() => handleActionSelect("review")}>Review</MenuItem>
-        <MenuItem disabled={actionLoading} onClick={() => handleActionSelect("approve")}>Approve</MenuItem>
-        <MenuItem disabled={actionLoading} onClick={() => handleActionSelect("reject")}>Reject</MenuItem>
+        {menuPatientStatus !== "Pending" && (
+          <MenuItem disabled={actionLoading} onClick={() => handleActionSelect("review")}>Review</MenuItem>
+        )}
+        {menuPatientStatus !== "Complete" && (
+          <MenuItem disabled={actionLoading} onClick={() => handleActionSelect("approve")}>Approve</MenuItem>
+        )}
+        {menuPatientStatus !== "Rejected" && (
+          <MenuItem disabled={actionLoading} onClick={() => handleActionSelect("reject")}>Reject</MenuItem>
+        )}
       </Menu>
 
       <PatientDetailsModal
@@ -198,6 +207,7 @@ const PatientTable = ({ patients, onStatusChange }) => {
         onClose={handleCloseModal}
         patient={selectedPatient}
         anchorPosition={anchorPosition}
+        onStatusChange={onStatusChange}
       />
     </>
   );

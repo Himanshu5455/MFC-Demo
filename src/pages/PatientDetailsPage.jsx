@@ -16,7 +16,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { statusColors } from '../utils/constants';
-import { getTriageBoardByID } from '../services/api';
+import { getTriageBoardByID, updateCustomerStatus } from '../services/api';
 import FileUploadBox from './FileUploadBox';
 import Notes from './Notes';
 import { COLORS } from '../components/color/Colors';
@@ -313,6 +313,15 @@ if (!isNaN(age) && age > 35) {
                 textTransform: 'none',
                 borderRadius: 2,
                 px: 3,
+              }}
+              onClick={async () => {
+                if (!patient?.id) return;
+                try {
+                  await updateCustomerStatus(patient.id, 'completed');
+                  setPatient((prev) => ({ ...prev, status: 'Complete' }));
+                } catch (e) {
+                  console.error('Failed to mark as complete', e);
+                }
               }}
             >
               Mark as complete

@@ -254,9 +254,9 @@ const PatientCard = ({ patient, status, onStatusChange }) => {
               }}
             >
               <MenuItem value="">Action</MenuItem>
-              <MenuItem value="review">Review</MenuItem>
-              <MenuItem value="approve">Approve</MenuItem>
-              <MenuItem value="reject">Reject</MenuItem>
+              {patient.status !== 'Pending' && <MenuItem value="review">Review</MenuItem>}
+              {patient.status !== 'Complete' && <MenuItem value="approve">Approve</MenuItem>}
+              {patient.status !== 'Rejected' && <MenuItem value="reject">Reject</MenuItem>}
             </Select>
           </FormControl>
         </div>
@@ -267,6 +267,7 @@ const PatientCard = ({ patient, status, onStatusChange }) => {
         onClose={handleCloseModal}
         patient={patient}
         anchorPosition={anchorPosition}
+        onStatusChange={onStatusChange}
       />
     </Card>
   );

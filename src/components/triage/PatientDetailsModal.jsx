@@ -20,11 +20,13 @@ import { statusColors } from "../../utils/constants";
 import FileUploadBox from "../../pages/FileUploadBox";
 import { COLORS } from "../color/Colors";
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import { updateCustomerStatus } from "../../services/api";
 
 // Component to display patient details in a modal
-const PatientDetailsModal = ({ open, onClose, patient, position }) => {
+const PatientDetailsModal = ({ open, onClose, patient, position, onStatusChange }) => {
   // console.log("PatientDetailsModal patient:", patient);
   const [patientData, setPatientData] = useState(patient);
+  const [markLoading, setMarkLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -181,6 +183,23 @@ const PatientDetailsModal = ({ open, onClose, patient, position }) => {
               textTransform: "none",
               borderRadius: 2,
             }}
+            disabled={markLoading}
+            onClick={async () => {
+              if (!patient?.id) return;
+              try {
+                setMarkLoading(true);
+                await updateCustomerStatus(patient.id, 'completed');
+                setPatientData((prev) => ({ ...prev, status: 'Complete' }));
+                if (onStatusChange) {
+                  onStatusChange(patient.id, 'Complete');
+                }
+                // Smooth update without hard reload: keep modal open and rely on state/parent refresh
+              } catch (e) {
+                console.error('Failed to mark as complete', e);
+              } finally {
+                setMarkLoading(false);
+              }
+            }}
           >
             Mark as complete
           </Button>
@@ -206,24 +225,24 @@ const PatientDetailsModal = ({ open, onClose, patient, position }) => {
               </Typography>
               <Chip
                 label={
-                  Array.isArray(patient.status)
-                    ? patient.status.join(", ")
-                    : patient.status || "N/A"
+                  Array.isArray(patientData?.status)
+                    ? patientData.status.join(", ")
+                    : patientData?.status || "N/A"
                 }
                 size="small"
                 sx={{
                   backgroundColor: `${
                     statusColors[
-                      Array.isArray(patient.status)
-                        ? patient.status[0]
-                        : patient.status
+                      Array.isArray(patientData?.status)
+                        ? patientData.status[0]
+                        : patientData?.status
                     ] || "#9CA3AF"
                   }20`,
                   color:
                     statusColors[
-                      Array.isArray(patient.status)
-                        ? patient.status[0]
-                        : patient.status
+                      Array.isArray(patientData?.status)
+                        ? patientData.status[0]
+                        : patientData?.status
                     ] || "#9CA3AF",
                   fontWeight: 500,
                 }}

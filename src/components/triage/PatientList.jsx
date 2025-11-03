@@ -86,7 +86,7 @@ const referrerMapping = {
   const currentPage = Math.min(page, totalPages);
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, totalItems);
-  const displayedPatients = filteredPatients.slice(startIndex, endIndex);
+  const displayedPatientsTable = filteredPatients.slice(startIndex, endIndex);
 
   return (
     <Box className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
@@ -177,27 +177,31 @@ const referrerMapping = {
           className="w-32 border rounded p-1 text-sm"
         />
 
-        <FilterDropdown
+        {/* <FilterDropdown
           label="Gender"
           value={filters.gender}
           onChange={handleFilterChange('gender')}
           options={filterOptions.gender}
           className="w-32 border rounded p-1 text-sm"
-        />
+        /> */}
       </div>
 
-      {view === 'table' ? <PatientTable patients={displayedPatients} onStatusChange={onStatusChange} /> : <PatientGrid patients={displayedPatients} onStatusChange={onStatusChange} />}
+      {view === 'table'
+        ? <PatientTable patients={displayedPatientsTable} onStatusChange={onStatusChange} />
+        : <PatientGrid patients={filteredPatients} onStatusChange={onStatusChange} />}
 
-      <CustomPagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        startItem={totalItems === 0 ? 0 : startIndex + 1}
-        endItem={endIndex}
-        totalItems={totalItems}
-        rowsPerPage={pageSize}
-        onPageChange={setPage}
-        onRowsPerPageChange={(newSize) => { setPageSize(newSize); setPage(1); }}
-      />
+      {view === 'table' && (
+        <CustomPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          startItem={totalItems === 0 ? 0 : startIndex + 1}
+          endItem={endIndex}
+          totalItems={totalItems}
+          rowsPerPage={pageSize}
+          onPageChange={setPage}
+          onRowsPerPageChange={(newSize) => { setPageSize(newSize); setPage(1); }}
+        />
+      )}
     </Box>
   );
 };
