@@ -1,16 +1,38 @@
 import http from './http';
 
 export async function registerCustomer(payload) {
-  console.log('Registering customer with payload:', payload);
-  console.log("payload", payload)
-
   const form = new FormData();
+
   Object.entries(payload).forEach(([key, value]) => {
-    form.append(key, value);
+    if (key === "files") {
+      // Append only real File/Blob objects
+      (value || []).forEach((item) => {
+        // Direct File/Blob
+        if (item instanceof File || item instanceof Blob) {
+          form.append("files", item);
+          return;
+        }
+        // Objects produced by ChatInput: { name, size, type, file | _file }
+        const candidate = item?.file || item?._file;
+        if (candidate instanceof File || candidate instanceof Blob) {
+          form.append("files", candidate, candidate.name || item?.name || "upload" );
+          return;
+        }
+        // If it's a string (e.g., previously uploaded URL/filename), skip to avoid backend validation error
+        // Optionally, you could fetch and convert to Blob here if needed in the future
+      });
+    } else if (Array.isArray(value)) {
+      // For non-file arrays, append each entry
+      value.forEach((v) => form.append(key, v));
+    } else if (typeof value === 'boolean') {
+      form.append(key, String(value));
+    } else if (value !== undefined && value !== null) {
+      form.append(key, value);
+    }
   });
 
-  return await http.post('/mfc/register-customer', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+  return await http.post("/mfc/register-customer", form, {
+    headers: { "Content-Type": "multipart/form-data" },
   });
 }
 
@@ -208,7 +230,13 @@ export const getCustomerNotes = async (customerId) => {
 
 // update customer status
 export const updateCustomerStatus = async (customerId, status) => {
-  const data = await http.patch(`/dashboard/customers/${customerId}/status`, { status });
+  const formBody = new URLSearchParams();
+  formBody.append('status', status);
+  const data = await http.patch(
+    `/dashboard/customers/${customerId}/status`,
+    formBody,
+    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+  );
   console.log('Status updated:', data);
   return data;
 };

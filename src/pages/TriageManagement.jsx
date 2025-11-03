@@ -64,8 +64,12 @@ const TriageManagement = () => {
         const result = await getTriageBoard();
         const normalizedPatients = (result?.new ?? []).map(normalizePatient);
         const uniqueAges = getUniqueAges(result?.new ?? []);
+        console.log("Fetched triage data:", normalizedPatients);
+        console.log("uniqueAges:", uniqueAges);
 
-        setPatientsList(normalizedPatients);
+        setPatientsList(normalizedPatients.sort(
+          (a, b) => new Date(b.referral_date) - new Date(a.referral_date)
+        ));
         setAgeOptions(uniqueAges);
       } catch (err) {
         console.error('Failed to fetch triage data:', err);
@@ -77,6 +81,12 @@ const TriageManagement = () => {
 
     fetchTriageData();
   }, []);
+
+  const handleStatusChange = (patientId, newUiStatus) => {
+    setPatientsList((prev) =>
+      prev.map((p) => (p.id === patientId ? { ...p, status: newUiStatus } : p))
+    );
+  };
 
   // Render loading state
   if (isLoading) {
@@ -101,7 +111,7 @@ const TriageManagement = () => {
       <main className="flex-1 container mx-auto px-4 py-6">
         <h1 className="text-4xl font-bold mb-6 text-gray-800 px-2 py-2">Patient Triage Management</h1>
         <TriageOverview patients={patientsList} />
-        <PatientList patients={patientsList} ageOptions={ageOptions} />
+        <PatientList patients={patientsList} ageOptions={ageOptions} onStatusChange={handleStatusChange} />
       </main>
       <Footer />
     </div>

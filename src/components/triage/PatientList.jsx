@@ -13,7 +13,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import CustomPagination from '../ui/CustomPagination';
 
 
-const PatientList = ({ patients = [] }) => {
+const PatientList = ({ patients = [], onStatusChange }) => {
   const [view, setView] = useState('table');
   const [searchTerm, setSearchTerm] = useState('');
   const [pageSize, setPageSize] = useState(10);
@@ -186,7 +186,7 @@ const referrerMapping = {
         />
       </div>
 
-      {view === 'table' ? <PatientTable patients={displayedPatients} /> : <PatientGrid patients={displayedPatients} />}
+      {view === 'table' ? <PatientTable patients={displayedPatients} /> : <PatientGrid patients={displayedPatients} onStatusChange={onStatusChange} />}
 
       <CustomPagination
         currentPage={currentPage}

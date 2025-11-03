@@ -92,7 +92,7 @@ const SettingsPage = () => {
         setUser((prev) => ({ ...prev, avatar: result.image }));
       }
     } catch (err) {
-      console.error("Upload failed", err); 
+      console.error("Upload failed", err);
     } finally {
       setUploading(false);
     }
@@ -101,6 +101,7 @@ const SettingsPage = () => {
   return (
     <div className="p-4 md:p-8 min-h-screen max-w-[1140px] mx-auto">
       <h2 className="text-2xl font-semibold p-4">Settings</h2>
+      <button className="text-xl font-semibold p-4" onClick={() => navigate("/admin/dashboard")}>Back to Dashboard</button>
       <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-lg">
         {/* Sidebar */}
         <div className="w-full md:w-1/4 border border-gray-200 rounded-lg">

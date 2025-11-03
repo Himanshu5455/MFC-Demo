@@ -2,7 +2,7 @@ import Typography from '@mui/material/Typography';
 import PatientCard from './PatientCard';
 import { statusColors } from '../../utils/constants';
 
-const PatientGrid = ({ patients =[] }) => {
+const PatientGrid = ({ patients =[], onStatusChange }) => {
   const statusGroups = {
     'Awaiting Review': patients.filter(p => p.status === 'Awaiting Review'),
     'Pending': patients.filter(p => p.status === 'Pending'),
@@ -44,6 +44,7 @@ const PatientGrid = ({ patients =[] }) => {
                   key={patient.id} 
                   patient={patient} 
                   status={displayStatus}
+                  onStatusChange={onStatusChange}
                 />
               ))}
             </div>

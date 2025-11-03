@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
@@ -6,15 +6,17 @@ import TextField from '@mui/material/TextField';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
-import CheckIcon from '@mui/icons-material/Check';
+import Checkbox from '@mui/material/Checkbox';
 import CloseIcon from '@mui/icons-material/Close';
 import { statusColors } from '../../utils/constants';
 import PatientDetailsModal from './PatientDetailsModal';
+import { updateCustomerStatus } from '../../services/api';
 
-const PatientCard = ({ patient, status }) => {
+const PatientCard = ({ patient, status, onStatusChange }) => {
   const borderColor = statusColors[status] || '#9CA3AF';
   const [modalOpen, setModalOpen] = useState(false);
   const [anchorPosition, setAnchorPosition] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const handlePatientClick = (event) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -28,6 +30,64 @@ const PatientCard = ({ patient, status }) => {
   const handleCloseModal = () => {
     setModalOpen(false);
     setAnchorPosition(null);
+  };
+
+  const checkboxState = useMemo(() => {
+    // Default: Demographics and Prioritization checked
+    const base = {
+      demographics: true,
+      prioritization: true,
+      profiling: false,
+      feedback: false,
+    };
+
+    // If status Rejected: all unchecked
+    if (patient.status === 'Rejected') {
+      return { demographics: false, prioritization: false, profiling: false, feedback: false };
+    }
+
+    // If status Pending: Profiling checked, Feedback unchecked
+    if (patient.status === 'Pending') {
+      return { ...base, profiling: true, feedback: false };
+    }
+    // If status Complete: Profiling and Feedback checked
+    if (patient.status === 'Complete') {
+      return { ...base, profiling: true, feedback: true };
+    }
+    // Other statuses keep defaults (e.g., Awaiting Review, Rejected)
+    return base;
+  }, [patient.status]);
+
+  const handleActionChange = async (e) => {
+    const value = e.target.value;
+    if (!value) return;
+
+    // Map dropdown to backend status and UI status
+    const backendMap = {
+      review: 'contacted', // goes to Pending column
+      approve: 'completed', // goes to Complete column
+      reject: 'disengaged', // goes to Rejected column
+    };
+    const uiMap = {
+      review: 'Pending',
+      approve: 'Complete',
+      reject: 'Rejected',
+    };
+
+    const backendStatus = backendMap[value];
+    const uiStatus = uiMap[value];
+    if (!backendStatus || !uiStatus) return;
+
+    try {
+      setActionLoading(true);
+      await updateCustomerStatus(patient.id, backendStatus);
+      onStatusChange && onStatusChange(patient.id, uiStatus);
+    } catch (err) {
+      // Optionally, show a toast/snackbar in future
+      console.error('Failed to update status', err);
+    } finally {
+      setActionLoading(false);
+    }
   };
   
   return (
@@ -70,11 +130,12 @@ const PatientCard = ({ patient, status }) => {
         </Typography>
         
         <div className="space-y-2 mb-4">
+          {(() => { const allUnchecked = !checkboxState.demographics && !checkboxState.prioritization && !checkboxState.profiling && !checkboxState.feedback; return (
           <div className="flex items-center gap-2">
-            {patient.demographics ? (
-              <CheckIcon sx={{ color: '#10B981', fontSize: '1rem' }} />
-            ) : (
+            {allUnchecked ? (
               <CloseIcon sx={{ color: '#EF4444', fontSize: '1rem' }} />
+            ) : (
+              <Checkbox size="small" disabled checked={checkboxState.demographics} />
             )}
             <Typography 
               variant="body2" 
@@ -86,12 +147,14 @@ const PatientCard = ({ patient, status }) => {
               Demographics
             </Typography>
           </div>
-          
+          ); })()}
+
+          {(() => { const allUnchecked = !checkboxState.demographics && !checkboxState.prioritization && !checkboxState.profiling && !checkboxState.feedback; return (
           <div className="flex items-center gap-2">
-            {patient.prioritization ? (
-              <CheckIcon sx={{ color: '#10B981', fontSize: '1rem' }} />
-            ) : (
+            {allUnchecked ? (
               <CloseIcon sx={{ color: '#EF4444', fontSize: '1rem' }} />
+            ) : (
+              <Checkbox size="small" disabled checked={checkboxState.prioritization} />
             )}
             <Typography 
               variant="body2" 
@@ -103,12 +166,14 @@ const PatientCard = ({ patient, status }) => {
               Prioritization
             </Typography>
           </div>
-          
+          ); })()}
+
+          {(() => { const allUnchecked = !checkboxState.demographics && !checkboxState.prioritization && !checkboxState.profiling && !checkboxState.feedback; return (
           <div className="flex items-center gap-2">
-            {patient.profiling ? (
-              <CheckIcon sx={{ color: '#10B981', fontSize: '1rem' }} />
-            ) : (
+            {allUnchecked ? (
               <CloseIcon sx={{ color: '#EF4444', fontSize: '1rem' }} />
+            ) : (
+              <Checkbox size="small" disabled checked={checkboxState.profiling} />
             )}
             <Typography 
               variant="body2" 
@@ -120,12 +185,14 @@ const PatientCard = ({ patient, status }) => {
               Profiling
             </Typography>
           </div>
-          
+          ); })()}
+
+          {(() => { const allUnchecked = !checkboxState.demographics && !checkboxState.prioritization && !checkboxState.profiling && !checkboxState.feedback; return (
           <div className="flex items-center gap-2">
-            {patient.feedback ? (
-              <CheckIcon sx={{ color: '#10B981', fontSize: '1rem' }} />
-            ) : (
+            {allUnchecked ? (
               <CloseIcon sx={{ color: '#EF4444', fontSize: '1rem' }} />
+            ) : (
+              <Checkbox size="small" disabled checked={checkboxState.feedback} />
             )}
             <Typography 
               variant="body2" 
@@ -137,10 +204,11 @@ const PatientCard = ({ patient, status }) => {
               Feedback
             </Typography>
           </div>
+          ); })()}
         </div>
         
         <div className="flex gap-2">
-          <TextField 
+          {/* <TextField 
             size="small" 
             placeholder="Input text"
             className="flex-1"
@@ -164,11 +232,13 @@ const PatientCard = ({ patient, status }) => {
                 opacity: 1,
               },
             }}
-          />
+          /> */}
           <FormControl size="small" className="min-w-24">
             <Select 
               defaultValue="" 
               displayEmpty
+              onChange={handleActionChange}
+              disabled={actionLoading}
               sx={{
                 fontSize: '0.875rem',
                 '& .MuiOutlinedInput-notchedOutline': {

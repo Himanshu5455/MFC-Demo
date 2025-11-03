@@ -134,85 +134,98 @@ const EmberIntake = () => {
   };
 
   // Final form submission
-const endFlow = async () => {
-  setAwaiting({ type: "none" });
+  const endFlow = async () => {
+    setAwaiting({ type: "none" });
 
-  // show loading message
-  pushBot("⏳ Submitting your information...", { questionId: "processing" });
+    // show loading message
+    pushBot("⏳ Submitting your information...", { questionId: "processing" });
 
-  const payload = {
-    name: data?.name?.trim() || "",
-    email: data?.email?.trim() || "",
-    phone: data?.phone?.trim() || "",
-    referral_reason: data?.reasonRaw?.trim() || "",
-    partner_available: Boolean(data?.hasPartner) || false,
-    partner_name: data?.partner?.name?.trim() || "",
-    partner_dob: data?.partner?.dob ? data.partner.dob.split("/").reverse().join("-") : "",
-    partner_health_card: "", // Files are handled separately
-    partner_sex: data?.partner?.sexAtBirth || "",
-    partner_email: data?.partner?.email?.trim() || "",
-    partner_address: data?.partner?.address?.trim() || "",
-    partner_phone: data?.partner?.phone?.trim() || "",
-    medical_records: "", // Files are handled separately
-    alternative_no: "",
-    physician: "",
-    region: "",
-    dob: data?.dob ? data.dob.split("/").reverse().join("-") : "",
-    OHIP: data?.ohipNumber?.trim() || "",
-    gender: data?.sexAtBirth || "",
-    full_address: data?.address?.trim() || "",
-    refer_physician_available: false,
-    refer_physician_name: "",
-    refer_physician_email: "",
-    refer_physician_address: "",
-    refer_physician_fax_no: "",
-    refer_physician_OHIP_no: "",
-    refer_physician_region: "",
-    pain_scale: data?.painLevel || "",
-    positive_experience: true,
-    rate_experience: "",
-    comment: "",
-  };
+    const payload = {
+      name: data?.name?.trim() || "",
+      email: data?.email?.trim() || "",
+      phone: data?.phone?.trim() || "",
+      referral_reason: data?.reasonRaw?.trim() || "",
+      partner_available: Boolean(data?.hasPartner) || false,
+      partner_name: data?.partner?.name?.trim() || "",
+      partner_dob: data?.partner?.dob ? data.partner.dob.split("/").reverse().join("-") : "",
+      partner_health_card: "", // Files are handled separately
+      partner_sex: data?.partner?.sexAtBirth || "",
+      partner_email: data?.partner?.email?.trim() || "",
+      partner_address: data?.partner?.address?.trim() || "",
+      partner_phone: data?.partner?.phone?.trim() || "",
+      //    files: [
+      //   ...(data?.healthCardFiles || []),
+      //   ...(data?.medicalRecords || []),
+      //   ...(data?.blueCrossFiles || []),
+      //   ...(data?.partnerHealthCardFiles || []),
+      // ],
 
-  try {
-    console.log("payload", payload);
-    const response = await registerCustomer(payload);
-    console.log("API Success:", response);
+      medical_records: "", // Files are handled separately
+      alternative_no: "",
+      physician: "",
+      region: "",
+      dob: data?.dob ? data.dob.split("/").reverse().join("-") : "",
+      OHIP: data?.ohipNumber?.trim() || "",
+      gender: data?.sexAtBirth || "",
+      full_address: data?.address?.trim() || "",
+      refer_physician_available: false,
+      refer_physician_name: "",
+      refer_physician_email: "",
+      refer_physician_address: "",
+      refer_physician_fax_no: "",
+      refer_physician_OHIP_no: "",
+      refer_physician_region: "",
+      pain_scale: data?.painLevel || "",
+      positive_experience: true,
+      rate_experience: "",
+      comment: "",
+      files: [
+        ...(data?.blueCrossFiles || []),
+        ...(data?.healthCardFiles || []),
+        ...(data?.medicalRecords || []),
+        ...(data?.partner?.healthCardFiles || []),
+      ].flat(),
+    };
 
-    // ✅ remove the "Submitting..." message
-    setMessages((prev) => prev.filter((m) => m.questionId !== "processing"));
+    try {
+      console.log("payload", payload);
+      const response = await registerCustomer(payload);
+      console.log("API Success:", response);
 
-    // ✅ then show success
-    pushBot(
-      `🎉 Thank you very much ${data.name || ""}!\nYour information has been submitted successfully.\nWe'll get back to you soon!`,
-      { questionId: "success" }
-    );
-  } catch (error) {
-    console.error("API Error:", error);
+      // ✅ remove the "Submitting..." message
+      setMessages((prev) => prev.filter((m) => m.questionId !== "processing"));
 
-    // ✅ remove the "Submitting..." message even on error
-    setMessages((prev) => prev.filter((m) => m.questionId !== "processing"));
-
-    const details = error?.response?.data?.detail;
-    if (Array.isArray(details) && details.length > 0) {
-      const missing = details
-        .map((d) => d.loc?.[1])
-        .filter(Boolean)
-        .join(", ");
+      // ✅ then show success
       pushBot(
-        `⚠️ Some required fields are missing: ${missing}.\nPlease check your data and try again.`,
-        { questionId: "error-validation" }
+        `🎉 Thank you very much ${data.name || ""}!\nYour information has been submitted successfully.\nWe'll get back to you soon!`,
+        { questionId: "success" }
       );
-    } else {
-      pushBot(
-        `❌ Submission failed but your data is safe locally.\nPlease contact support if this continues.`,
-        { questionId: "error-fallback" }
-      );
+    } catch (error) {
+      console.error("API Error:", error);
+
+      // ✅ remove the "Submitting..." message even on error
+      setMessages((prev) => prev.filter((m) => m.questionId !== "processing"));
+
+      const details = error?.response?.data?.detail;
+      if (Array.isArray(details) && details.length > 0) {
+        const missing = details
+          .map((d) => d.loc?.[1])
+          .filter(Boolean)
+          .join(", ");
+        pushBot(
+          `⚠️ Some required fields are missing: ${missing}.\nPlease check your data and try again.`,
+          { questionId: "error-validation" }
+        );
+      } else {
+        pushBot(
+          `❌ Submission failed but your data is safe locally.\nPlease contact support if this continues.`,
+          { questionId: "error-fallback" }
+        );
+      }
     }
-  }
 
-  setStep("end");
-};
+    setStep("end");
+  };
 
   // Flow Handlers
   const { handleOptionClick, handleAnswer } = createFlowHandlers(
