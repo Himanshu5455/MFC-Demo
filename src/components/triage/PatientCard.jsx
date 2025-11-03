@@ -64,9 +64,9 @@ const PatientCard = ({ patient, status, onStatusChange }) => {
 
     // Map dropdown to backend status and UI status
     const backendMap = {
-      review: 'contacted', // goes to Pending column
+      review: 'Pending', // goes to Pending column
       approve: 'completed', // goes to Complete column
-      reject: 'disengaged', // goes to Rejected column
+      reject: 'Rejected', // goes to Rejected column
     };
     const uiMap = {
       review: 'Pending',

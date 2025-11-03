@@ -9,15 +9,20 @@ import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import IconButton from "@mui/material/IconButton";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import StatusBadge from "../common/StatusBadge";
 import PatientDetailsModal from "./PatientDetailsModal";
-import { getTriageBoardByID } from "../../services/api";
+import { getTriageBoardByID, updateCustomerStatus } from "../../services/api";
 
-const PatientTable = ({ patients }) => {
+const PatientTable = ({ patients, onStatusChange }) => {
   const [selectedPatient, setSelectedPatient] = useState(null);
   console.log(selectedPatient, "selectedPatient");
   const [modalOpen, setModalOpen] = useState(false);
   const [anchorPosition, setAnchorPosition] = useState(null);
+  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
+  const [menuPatientId, setMenuPatientId] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const handlePatientClick = async (patient, event) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -46,6 +51,49 @@ const PatientTable = ({ patients }) => {
     setModalOpen(false);
     setSelectedPatient(null);
     setAnchorPosition(null);
+  };
+
+  const openActionsMenu = (event, patientId) => {
+    event.stopPropagation();
+    setMenuAnchorEl(event.currentTarget);
+    setMenuPatientId(patientId);
+  };
+
+  const closeActionsMenu = () => {
+    setMenuAnchorEl(null);
+    setMenuPatientId(null);
+  };
+
+  const handleActionSelect = async (value) => {
+    if (!menuPatientId || !value) return;
+
+    const backendMap = {
+      review: "Pending",
+      approve: "completed",
+      reject: "Rejected",
+    };
+    const uiMap = {
+      review: "Pending",
+      approve: "Complete",
+      reject: "Rejected",
+    };
+
+    const backendStatus = backendMap[value];
+    const uiStatus = uiMap[value];
+    if (!backendStatus || !uiStatus) return;
+
+    try {
+      setActionLoading(true);
+      await updateCustomerStatus(menuPatientId, backendStatus);
+      if (onStatusChange) {
+        onStatusChange(menuPatientId, uiStatus);
+      }
+    } catch (err) {
+      console.error("Failed to update status", err);
+    } finally {
+      setActionLoading(false);
+      closeActionsMenu();
+    }
   };
   return (
     <>
@@ -123,7 +171,7 @@ const PatientTable = ({ patients }) => {
                   {patient.entryDate}
                 </TableCell>
                 <TableCell>
-                  <IconButton size="small">
+                  <IconButton size="small" onClick={(e) => openActionsMenu(e, patient.id)} disabled={actionLoading}>
                     <MoreVertIcon />
                   </IconButton>
                 </TableCell>
@@ -132,6 +180,18 @@ const PatientTable = ({ patients }) => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={closeActionsMenu}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <MenuItem disabled={actionLoading} onClick={() => handleActionSelect("review")}>Review</MenuItem>
+        <MenuItem disabled={actionLoading} onClick={() => handleActionSelect("approve")}>Approve</MenuItem>
+        <MenuItem disabled={actionLoading} onClick={() => handleActionSelect("reject")}>Reject</MenuItem>
+      </Menu>
 
       <PatientDetailsModal
         open={modalOpen}

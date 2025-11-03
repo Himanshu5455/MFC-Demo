@@ -186,7 +186,7 @@ const referrerMapping = {
         />
       </div>
 
-      {view === 'table' ? <PatientTable patients={displayedPatients} /> : <PatientGrid patients={displayedPatients} onStatusChange={onStatusChange} />}
+      {view === 'table' ? <PatientTable patients={displayedPatients} onStatusChange={onStatusChange} /> : <PatientGrid patients={displayedPatients} onStatusChange={onStatusChange} />}
 
       <CustomPagination
         currentPage={currentPage}
