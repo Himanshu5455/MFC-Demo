@@ -5,11 +5,15 @@ import Footer from "../components/layout/Footer";
 import ChatHeader from "../components/chat/ChatHeader";
 import ChatMessage from "../components/chat/ChatMessage";
 import ChatInput from "../components/chat/ChatInput";
-import { extractNameAndPhone, computeAge, categorizeReason } from "../utils/utils";
+import {
+  extractNameAndPhone,
+  computeAge,
+  categorizeReason,
+} from "../utils/utils";
 import { WELCOME_TEXT } from "../utils/constants";
 import { createFlowHandlers } from "../utils/flowHandlers";
 import { registerCustomer } from "../services/api";
-
+import ThinkingDots from "../utils/ThinkingDots";
 
 const initialData = {
   name: "",
@@ -68,7 +72,8 @@ const EmberIntake = () => {
   // Auto-scroll to bottom
   useEffect(() => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
 
@@ -86,20 +91,36 @@ const EmberIntake = () => {
     setAwaiting({ type: "text", questionId: "intro" });
   }, []);
 
-  // Helpers
   const pushBot = (message, options) => {
-    setMessages((prev) => [
-      ...prev,
-      {
-        type: "bot",
-        message,
-        timestamp: new Date().toISOString(),
-        questionId: options?.questionId || "",
-        shouldStream: true,
-        options: options?.options,
-        showBooleanOptions: options?.showBooleanOptions,
-      },
-    ]);
+    const questionId = options?.questionId || "";
+    const delay = Math.random() * (2000 - 500) + 500;
+
+    const dotsMessage = {
+      type: "bot",
+      message: "",
+      timestamp: new Date().toISOString(),
+      questionId,
+      showDots: true,
+    };
+
+    setMessages((prev) => [...prev, dotsMessage]);
+
+    setTimeout(() => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.questionId === questionId && m.showDots
+            ? {
+                ...m,
+                showDots: false,
+                message,
+                shouldStream: true,
+                options: options?.options,
+                showBooleanOptions: options?.showBooleanOptions,
+              }
+            : m
+        )
+      );
+    }, delay);
   };
 
   const pushUser = (message, questionId) => {
@@ -147,13 +168,15 @@ const EmberIntake = () => {
       referral_reason: data?.reasonRaw?.trim() || "",
       partner_available: Boolean(data?.hasPartner) || false,
       partner_name: data?.partner?.name?.trim() || "",
-      partner_dob: data?.partner?.dob ? data.partner.dob.split("/").reverse().join("-") : "",
+      partner_dob: data?.partner?.dob
+        ? data.partner.dob.split("/").reverse().join("-")
+        : "",
       partner_health_card: "", // Files are handled separately
       partner_sex: data?.partner?.sexAtBirth || "",
       partner_email: data?.partner?.email?.trim() || "",
       partner_address: data?.partner?.address?.trim() || "",
       partner_phone: data?.partner?.phone?.trim() || "",
-      medical_records: "", 
+      medical_records: "",
       alternative_no: "",
       physician: "",
       region: "",
@@ -190,7 +213,9 @@ const EmberIntake = () => {
 
       // ✅ then show success
       pushBot(
-        `🎉 Thank you very much ${data.name || ""}!\nYour information has been submitted successfully.\nWe'll get back to you soon!`,
+        `🎉 Thank you very much ${
+          data.name || ""
+        }!\nYour information has been submitted successfully.\nWe'll get back to you soon!`,
         { questionId: "success" }
       );
     } catch (error) {
@@ -234,8 +259,13 @@ const EmberIntake = () => {
 
   const currentQuestion = useMemo(() => {
     if (awaiting.type === "none" || awaiting.type === "option") return null;
-    const q = { id: awaiting.questionId || step, question: "", type: awaiting.type };
-    if (awaiting.type === "file") return { ...q, accept: awaiting.accept, multiple: awaiting.multiple };
+    const q = {
+      id: awaiting.questionId || step,
+      question: "",
+      type: awaiting.type,
+    };
+    if (awaiting.type === "file")
+      return { ...q, accept: awaiting.accept, multiple: awaiting.multiple };
     if (awaiting.type === "date") return { ...q, type: "date" };
     return q;
   }, [awaiting, step]);
@@ -256,11 +286,26 @@ const EmberIntake = () => {
     ]);
   };
 
-
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", bgcolor: "#f8f9fa" }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        bgcolor: "#f8f9fa",
+      }}
+    >
       {!isMobile && <Navbar />}
-      <Box sx={{ flex: 1, display: "flex", justifyContent: "center", pt: isMobile ? 0 : 1, pb: isMobile ? 0 : 1, overflow: "hidden" }}>
+      <Box
+        sx={{
+          flex: 1,
+          display: "flex",
+          justifyContent: "center",
+          pt: isMobile ? 0 : 1,
+          pb: isMobile ? 0 : 1,
+          overflow: "hidden",
+        }}
+      >
         <Box
           sx={{
             height: "100%",
@@ -270,7 +315,9 @@ const EmberIntake = () => {
             flexDirection: "column",
             bgcolor: "white",
             overflow: "hidden",
-            ...(isMobile ? {} : { borderRadius: 2, boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }),
+            ...(isMobile
+              ? {}
+              : { borderRadius: 2, boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }),
           }}
         >
           <ChatHeader
@@ -285,18 +332,29 @@ const EmberIntake = () => {
               flexGrow: 1,
               overflow: "auto",
               bgcolor: "#f8f9fa",
-              backgroundImage: isMobile ? "none" : "linear-gradient(145deg, #f8f9fa 0%, #e9ecef 100%)",
+              backgroundImage: isMobile
+                ? "none"
+                : "linear-gradient(145deg, #f8f9fa 0%, #e9ecef 100%)",
               display: "flex",
               flexDirection: "column",
               px: isMobile ? 1 : 3,
               py: 2,
               minHeight: 0,
               "&::-webkit-scrollbar": { width: "6px" },
-              "&::-webkit-scrollbar-thumb": { background: "#dee2e6", borderRadius: "3px" },
+              "&::-webkit-scrollbar-thumb": {
+                background: "#dee2e6",
+                borderRadius: "3px",
+              },
             }}
           >
             {messages.map((m, i) => (
-              <ChatMessage key={i} message={m} onOptionClick={handleOptionClick} />
+              <React.Fragment key={i}>
+                {m.showDots ? (
+                  <ThinkingDots />
+                ) : (
+                  <ChatMessage message={m} onOptionClick={handleOptionClick} />
+                )}
+              </React.Fragment>
             ))}
           </Box>
 

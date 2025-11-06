@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-
+import React, { useState, useRef, useEffect } from "react";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 
 import {
   Box,
@@ -14,48 +13,58 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemSecondaryAction
-} from '@mui/material';
-import SendIcon from '@mui/icons-material/Send';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AttachFileIcon from '@mui/icons-material/AttachFile';
-import AddIcon from '@mui/icons-material/Add';
+  ListItemSecondaryAction,
+} from "@mui/material";
+import SendIcon from "@mui/icons-material/Send";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
+import AddIcon from "@mui/icons-material/Add";
 
-const ChatInput = ({ question, currentAnswer, onAnswer, disabled, isStreamingActive, filesPermission, isEditing }) => {
-  const [inputValue, setInputValue] = useState(currentAnswer || '');
+const ChatInput = ({
+  question,
+  currentAnswer,
+  onAnswer,
+  disabled,
+  isStreamingActive,
+  filesPermission,
+  isEditing,
+}) => {
+  const [inputValue, setInputValue] = useState(currentAnswer || "");
+  const [validationError, setValidationError] = useState("");
+
   // Initialize files state with safety checks
   const [files, setFiles] = useState(() => {
     if (currentAnswer && Array.isArray(currentAnswer)) {
-      return currentAnswer.map(file => {
-        if (typeof file === 'string') {
+      return currentAnswer.map((file) => {
+        if (typeof file === "string") {
           return { name: file };
         }
         return {
-          name: file.name || 'Unnamed File',
+          name: file.name || "Unnamed File",
           size: file.size || 0,
-          type: file.type || 'application/octet-stream',
-          _file: file.file || null
+          type: file.type || "application/octet-stream",
+          _file: file.file || null,
         };
       });
     }
     return [];
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const fileInputRef = useRef(null);
 
   // Initialize files from currentAnswer if it exists
   useEffect(() => {
     if (currentAnswer && Array.isArray(currentAnswer)) {
-      const initialFiles = currentAnswer.map(file => {
-        if (typeof file === 'string') {
+      const initialFiles = currentAnswer.map((file) => {
+        if (typeof file === "string") {
           return { name: file };
         }
         return {
-          name: file.name || 'Unnamed File',
+          name: file.name || "Unnamed File",
           size: file.size || 0,
-          type: file.type || 'application/octet-stream',
-          _file: file.file || null
+          type: file.type || "application/octet-stream",
+          _file: file.file || null,
         };
       });
       setFiles(initialFiles);
@@ -65,50 +74,52 @@ const ChatInput = ({ question, currentAnswer, onAnswer, disabled, isStreamingAct
   // On question change: if editing from summary, prefill with existing answer; otherwise clear
   useEffect(() => {
     if (isEditing) {
-      if (question?.type === 'file' && Array.isArray(currentAnswer)) {
-        const initialFiles = currentAnswer.map(file => {
-          if (typeof file === 'string') {
+      if (question?.type === "file" && Array.isArray(currentAnswer)) {
+        const initialFiles = currentAnswer.map((file) => {
+          if (typeof file === "string") {
             return { name: file, isUrl: true };
           }
           return {
-            name: file.name || '',
+            name: file.name || "",
             size: file.size || 0,
-            type: file.type || '',
-            file: file
+            type: file.type || "",
+            file: file,
           };
         });
         setFiles(initialFiles);
-        setInputValue('');
-      } else if (question?.type === 'date') {
+        setInputValue("");
+      } else if (question?.type === "date") {
         // currentAnswer might be in DD/MM/YYYY; convert to Date for picker
-        if (typeof currentAnswer === "string" && currentAnswer.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        if (
+          typeof currentAnswer === "string" &&
+          currentAnswer.match(/^\d{2}\/\d{2}\/\d{4}$/)
+        ) {
           const [dd, mm, yyyy] = currentAnswer.split("/");
           const formattedDate = `${yyyy}-${mm}-${dd}`; // backend expects YYYY-MM-DD
-          console.log(formattedDate)
+          console.log(formattedDate);
           setInputValue(formattedDate);
-        }
-        else {
-          setInputValue(currentAnswer || '');
+        } else {
+          setInputValue(currentAnswer || "");
         }
         setFiles([]);
       } else {
-        setInputValue(currentAnswer || '');
+        setInputValue(currentAnswer || "");
         setFiles([]);
       }
     } else {
-      if (question?.type === 'file' && Array.isArray(currentAnswer)) {
+      if (question?.type === "file" && Array.isArray(currentAnswer)) {
         setFiles(currentAnswer);
-        setInputValue('');
+        setInputValue("");
       } else {
-        setInputValue('');
+        setInputValue("");
         setFiles([]);
       }
     }
-    setError('');
+    setError("");
   }, [question?.id, isEditing]);
 
-
   const handleSubmit = (value = inputValue) => {
+    console.log("inputValue,inputValue", inputValue);
     // Prevent submission if streaming is active
     if (isStreamingActive) {
       return;
@@ -128,23 +139,21 @@ const ChatInput = ({ question, currentAnswer, onAnswer, disabled, isStreamingAct
     // Normalize values based on question type
     if (question.type === "file") {
       // Create a safe representation of files for submission
-      submitValue = files.map(fileInfo => ({
+      submitValue = files.map((fileInfo) => ({
         name: fileInfo.name,
         size: fileInfo.size,
         type: fileInfo.type,
         // Include the actual File object if available
-        file: fileInfo._file || null
+        file: fileInfo._file || null,
       }));
     } else if (question.type === "date") {
       if (value instanceof Date) {
-
         const d = value;
         const day = String(d.getDate()).padStart(2, "0");
         const month = String(d.getMonth() + 1).padStart(2, "0");
         const year = String(d.getFullYear());
         submitValue = `${day}/${month}/${year}`;
       } else if (typeof value === "string" && value.includes("-")) {
-
         const parts = value.split("-");
         if (parts.length === 3) {
           submitValue = `${parts[2]}/${parts[1]}/${parts[0]}`;
@@ -158,9 +167,17 @@ const ChatInput = ({ question, currentAnswer, onAnswer, disabled, isStreamingAct
       // Convert text input to boolean for boolean questions
       if (typeof value === "string") {
         const lowerValue = value.toLowerCase().trim();
-        if (lowerValue === "yes" || lowerValue === "true" || lowerValue === "y") {
+        if (
+          lowerValue === "yes" ||
+          lowerValue === "true" ||
+          lowerValue === "y"
+        ) {
           submitValue = true;
-        } else if (lowerValue === "no" || lowerValue === "false" || lowerValue === "n") {
+        } else if (
+          lowerValue === "no" ||
+          lowerValue === "false" ||
+          lowerValue === "n"
+        ) {
           submitValue = false;
         } else {
           // If it's not a recognizable boolean value, treat as text
@@ -173,22 +190,18 @@ const ChatInput = ({ question, currentAnswer, onAnswer, disabled, isStreamingAct
       submitValue = value;
     }
 
-
     if (
       question.required &&
       (!submitValue ||
         (Array.isArray(submitValue) && submitValue.length === 0) ||
         submitValue === "")
     ) {
-
       if (question.id === "files" && filesPermission === false) {
-
       } else {
         setError(`${question.question} is required`);
         return;
       }
     }
-
 
     if (question.validation) {
       const validationError = question.validation(submitValue);
@@ -197,7 +210,6 @@ const ChatInput = ({ question, currentAnswer, onAnswer, disabled, isStreamingAct
         return;
       }
     }
-
 
     setError("");
     onAnswer(submitValue);
@@ -210,43 +222,127 @@ const ChatInput = ({ question, currentAnswer, onAnswer, disabled, isStreamingAct
     }
   };
 
-
   const handleFileUpload = (event) => {
-    const selectedFiles = Array.from(event.target.files || []).map(file => {
+    const selectedFiles = Array.from(event.target.files || []).map((file) => {
       // Create a safe representation of the file
       return {
-        name: file.name || 'Unnamed File',
+        name: file.name || "Unnamed File",
         size: file.size || 0,
-        type: file.type || 'application/octet-stream',
+        type: file.type || "application/octet-stream",
         // Store the original file separately for submission
-        _file: file
+        _file: file,
       };
     });
 
-    setFiles(prev => [...prev, ...selectedFiles]);
+    setFiles((prev) => [...prev, ...selectedFiles]);
 
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
   const handleRemoveFile = (index) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleKeyPress = (event) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
+    if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       handleSubmit();
     }
   };
 
+  const validateFullName = (value) => {
+    // Only letters and spaces allowed
+    const nameRegex = /^[A-Za-z\s]+$/;
+
+    if (!value.trim()) {
+      return "Full name is required.";
+    }
+
+    if (!nameRegex.test(value)) {
+      return "Name can only include letters and spaces.";
+    }
+
+    const words = value.trim().split(/\s+/);
+    if (words.length < 2) {
+      return "To ensure we have everything spelled correctly for your records, could you please tell me your full name (first and last name)?";
+    }
+
+    return "";
+  };
+
+  const handleChange = (e) => {
+    console.log("question.id", question.id);
+    const value = e.target.value;
+    setInputValue(value);
+
+    // intro means name field
+    if (question.id === "intro") {
+      const errorMsg = validateFullName(value);
+      setValidationError(errorMsg);
+    } else {
+      setValidationError("");
+    }
+  };
 
   const renderInput = () => {
     switch (question.type) {
       case "text":
       case "email":
       case "tel":
+        // return (
+        //   <Box
+        //     sx={{
+        //       display: "flex",
+        //       gap: 1,
+        //       alignItems: "center",
+        //       width: "100%",
+        //       px: { xs: 1, sm: 2 },
+        //     }}
+        //   >
+        //     <TextField
+        //       fullWidth
+        //       variant="outlined"
+        //       placeholder="Type a message..."
+        //       value={inputValue}
+        //       onChange={handleChange}
+        //       onKeyPress={handleKeyPress}
+        //       disabled={disabled}
+        //       type={question.type}
+        //       size="small"
+        //       sx={{
+        //         flex: 1,
+        //         "& .MuiOutlinedInput-root": {
+        //           borderRadius: 20,
+        //           backgroundColor: "white",
+        //           fontSize: { xs: "0.875rem", sm: "1rem" },
+        //         },
+        //       }}
+        //     />
+        //     <IconButton
+        //       onClick={() => handleSubmit()}
+        //       disabled={
+        //         disabled ||
+        //         (typeof inputValue === "string"
+        //           ? !inputValue.trim()
+        //           : !inputValue) ||
+        //         isStreamingActive
+        //       }
+        //       sx={{
+        //         bgcolor: "#125A67",
+        //         color: "white !important",
+        //         width: 40,
+        //         height: 40,
+        //         flexShrink: 0,
+        //         "&:hover": { bgcolor: "#0d434c", color: "white !important" },
+        //         "&:disabled": { bgcolor: "#e0e0e0", color: "#9CA3AF" },
+        //       }}
+        //     >
+        //       <SendIcon sx={{ color: "white" }} />
+        //     </IconButton>
+        //   </Box>
+        // );
         return (
           <Box
             sx={{
@@ -257,17 +353,18 @@ const ChatInput = ({ question, currentAnswer, onAnswer, disabled, isStreamingAct
               px: { xs: 1, sm: 2 },
             }}
           >
-
             <TextField
               fullWidth
               variant="outlined"
               placeholder="Type a message..."
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
+              onChange={handleChange}
               onKeyPress={handleKeyPress}
               disabled={disabled}
               type={question.type}
               size="small"
+              error={!!validationError}
+              helperText={validationError}
               sx={{
                 flex: 1,
                 "& .MuiOutlinedInput-root": {
@@ -278,12 +375,14 @@ const ChatInput = ({ question, currentAnswer, onAnswer, disabled, isStreamingAct
               }}
             />
             <IconButton
-              onClick={() => handleSubmit()}
+              onClick={() => {
+                if (!validationError && inputValue.trim()) handleSubmit();
+                else setError(validateFullName(inputValue));
+              }}
               disabled={
                 disabled ||
-                (typeof inputValue === "string"
-                  ? !inputValue.trim()
-                  : !inputValue) ||
+                !inputValue.trim() ||
+                !!validationError ||
                 isStreamingActive
               }
               sx={{
@@ -300,7 +399,6 @@ const ChatInput = ({ question, currentAnswer, onAnswer, disabled, isStreamingAct
             </IconButton>
           </Box>
         );
-
 
       case "boolean":
         return (
@@ -473,7 +571,6 @@ const ChatInput = ({ question, currentAnswer, onAnswer, disabled, isStreamingAct
               />
             </LocalizationProvider>
 
-
             <IconButton
               onClick={() => handleSubmit(inputValue)}
               disabled={!inputValue || disabled || isStreamingActive}
@@ -491,7 +588,6 @@ const ChatInput = ({ question, currentAnswer, onAnswer, disabled, isStreamingAct
             </IconButton>
           </Box>
         );
-
 
       case "file":
         return (
@@ -519,7 +615,10 @@ const ChatInput = ({ question, currentAnswer, onAnswer, disabled, isStreamingAct
 
             {/* preview uploaded files */}
             {files.length > 0 && (
-              <Paper variant="outlined" sx={{ p: 1, maxHeight: 80, overflow: "auto" }}>
+              <Paper
+                variant="outlined"
+                sx={{ p: 1, maxHeight: 80, overflow: "auto" }}
+              >
                 <Typography
                   variant="caption"
                   sx={{ mb: 0.5, color: "#374151", display: "block" }}
@@ -533,11 +632,23 @@ const ChatInput = ({ question, currentAnswer, onAnswer, disabled, isStreamingAct
                         sx={{ mr: 0.5, color: "#125A67", fontSize: 14 }}
                       />
                       <ListItemText
-                        primary={typeof fileInfo === 'string' ? fileInfo : (fileInfo.name || 'Unnamed File')}
-                        secondary={typeof fileInfo === 'string' ? '' : (fileInfo.size ? `${(fileInfo.size / 1024).toFixed(1)} KB` : '')}
+                        primary={
+                          typeof fileInfo === "string"
+                            ? fileInfo
+                            : fileInfo.name || "Unnamed File"
+                        }
+                        secondary={
+                          typeof fileInfo === "string"
+                            ? ""
+                            : fileInfo.size
+                            ? `${(fileInfo.size / 1024).toFixed(1)} KB`
+                            : ""
+                        }
                         sx={{
                           "& .MuiListItemText-primary": { fontSize: "0.75rem" },
-                          "& .MuiListItemText-secondary": { fontSize: "0.65rem" },
+                          "& .MuiListItemText-secondary": {
+                            fontSize: "0.65rem",
+                          },
                         }}
                       />
                       <ListItemSecondaryAction>
@@ -566,7 +677,11 @@ const ChatInput = ({ question, currentAnswer, onAnswer, disabled, isStreamingAct
                 sx={{
                   borderColor: "#125A67",
                   color: "#125A67",
-                  "&:hover": { borderColor: "#0d434c", bgcolor: "#125A67", color: "white" },
+                  "&:hover": {
+                    borderColor: "#0d434c",
+                    bgcolor: "#125A67",
+                    color: "white",
+                  },
                   borderRadius: 20,
                   textTransform: "none",
                   flex: 1,
@@ -587,7 +702,10 @@ const ChatInput = ({ question, currentAnswer, onAnswer, disabled, isStreamingAct
                     color: "white !important",
                     width: 48,
                     height: 48,
-                    "&:hover": { bgcolor: "#0d434c", color: "white !important" },
+                    "&:hover": {
+                      bgcolor: "#0d434c",
+                      color: "white !important",
+                    },
                   }}
                 >
                   <SendIcon sx={{ color: "white" }} />
@@ -606,7 +724,6 @@ const ChatInput = ({ question, currentAnswer, onAnswer, disabled, isStreamingAct
             )}
           </Box>
         );
-
 
       default:
         return (
@@ -677,20 +794,19 @@ const ChatInput = ({ question, currentAnswer, onAnswer, disabled, isStreamingAct
     }
   };
 
-
   return (
-    <Box sx={{
-      minHeight: '60px',
-      minWidth: '100%',
-      display: 'flex',
-      alignItems: 'flex-end',
-      width: '100%'
-    }}>
+    <Box
+      sx={{
+        minHeight: "60px",
+        minWidth: "100%",
+        display: "flex",
+        alignItems: "flex-end",
+        width: "100%",
+      }}
+    >
       {renderInput()}
     </Box>
   );
 };
 
 export default ChatInput;
-
-
